@@ -21,7 +21,7 @@
 ## What is mean total number of steps taken per day?
 
 1. Make a histogram of the total number of steps taken each day.
-    ```{r}
+    ```{r histogram}
     daily.steps <- data[,sum(steps),by=date][,na.omit(V1)]
     hist(daily.steps,xlab='Steps/day', main="Histogram of steps per day")
     ```
@@ -35,7 +35,7 @@
 ## What is the average daily activity pattern?
 
 1. Make a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis).
-    ```{r}
+    ```{r timeseries}
     daily.pattern <- data[,list(steps=mean(steps,na.rm=T)),by=interval]
     plot(daily.pattern,type='l',
          xlab='Time of day (in five minute intervals)',
@@ -67,7 +67,7 @@
     ```
 
 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
-    ```{r results='asis'}
+    ```{r imputed,results='asis'}
     daily.steps.imputed <- data1[,sum(imputed),by=date]
     hist(daily.steps.imputed[,V1],xlab='Steps/day', main="Histogram of steps per day")
     print(xtable(daily.steps.imputed[,list(Mean=mean(V1),Median=median(V1))]), type='html')
@@ -83,7 +83,7 @@
     daily.pattern.panel <- data[,list(steps=mean(steps,na.rm=T)),by=list(interval,weekend)]
     ```
 2. Make a panel plot containing a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
-```{r}
+```{r panel}
     library(lattice)
     xyplot(steps ~ interval | weekend, data=daily.pattern.panel, type='l', layout=c(1,2))
     ```
