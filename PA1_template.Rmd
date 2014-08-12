@@ -61,18 +61,19 @@
 
 3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
     ```{r results='hide'}
-    data[,imputed:=mean(steps,na.rm=T),by=interval]
-    data[!is.na(steps), imputed:=steps]
+    data1 <- copy(data)
+    data1[,imputed:=mean(steps,na.rm=T),by=interval]
+    data1[!is.na(steps), imputed:=steps]
     ```
 
 4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
     ```{r results='asis'}
-    daily.steps.imputed <- data[,sum(imputed),by=date]
+    daily.steps.imputed <- data1[,sum(imputed),by=date]
     hist(daily.steps.imputed[,V1],xlab='Steps/day', main="Histogram of steps per day")
     print(xtable(daily.steps.imputed[,list(Mean=mean(V1),Median=median(V1))]), type='html')
     ```
 
-    The mean is unchanged while the median moves towards the mean. The overall effect is to make the peak around the median and the mean in the histogram more pronounced.
+    The mean is unchanged while the median moves towards the mean. The effect on the histogram is to make the peak around the median and the mean more pronounced.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
