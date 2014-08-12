@@ -3,75 +3,87 @@
 
 ## Loading and preprocessing the data
 
-```{r results='hide'}
-library(data.table)
-data <- data.table(read.csv(unz('activity.zip', 'activity.csv')))
+1. Load the data.
 
-# Convert character strings representing dates into date objects:
-data[,date:=as.Date(date)]
-```
+    The data is loaded into a `data.table`, a data structured introduced in the *Getting and Cleaning Data* course, the third course of the *Specialization in Data Science*.
+
+    ```{r}
+    library(data.table)
+    data <- data.table(read.csv(unz('activity.zip', 'activity.csv')))
+    ```
+
+2. Process/transform the data (if necessary) into a format suitable for your analysis.
+    ```{r results='hide'}
+    # Convert character strings representing dates into date objects:
+    data[,date:=as.Date(date)]
+    ```
 
 ## What is mean total number of steps taken per day?
 
-```{r results='asis'}
-daily.steps <- data[,sum(steps),by=date][,na.omit(V1)]
-hist(daily.steps,xlab='Steps/day', main="Histogram of steps per day")
+1. Make a histogram of the total number of steps taken each day.
+    ```{r}
+    daily.steps <- data[,sum(steps),by=date][,na.omit(V1)]
+    hist(daily.steps,xlab='Steps/day', main="Histogram of steps per day")
+    ```
 
-library(xtable)
-print(xtable(data.frame(Mean=mean(daily.steps), Median=median(daily.steps))), type='html')
-```
+2. Calculate and report the **mean** and **median** total number of steps taken per day.
+    ```{r results='asis'}
+    library(xtable)
+    print(xtable(data.frame(Mean=mean(daily.steps), Median=median(daily.steps))), type='html')
+    ```
 
 ## What is the average daily activity pattern?
 
-```{r}
-daily.pattern <- data[,list(steps=mean(steps,na.rm=T)),by=interval]
-plot(daily.pattern,type='l',
-     xlab='Time of day (in five minute intervals)',
-     ylab='Average number of steps'
-     )
-```
+1. Make a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis).
+    ```{r}
+    daily.pattern <- data[,list(steps=mean(steps,na.rm=T)),by=interval]
+    plot(daily.pattern,type='l',
+         xlab='Time of day (in five minute intervals)',
+         ylab='Average number of steps'
+         )
+    ```
 
-The 5-minute interval that, on average across all the days in the dataset, contains the maximum number of steps:
-```{r}
-daily.pattern[which.max(steps)]$interval
-```
-
+2. Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?
+    ```{r}
+    daily.pattern[which.max(steps)]$interval
+    ```
 
 ## Imputing missing values
 
-Total number of missing values in the dataset:
+1. Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with `NA`s).
+    ```{r}
+    data[is.na(steps),.N]
+    ```
 
-```{r}
-data[is.na(steps),.N]
-```
+2. Devise a strategy for filling in all of the missing values in the dataset.
 
-The strategy chosen for filling in all of the missing values in the dataset is to take the mean for that 5-minute interval across all days.
+    **Imputing strategy:** The strategy chosen for filling in all of the missing values in the dataset is to take the mean for that 5-minute interval         across all days.
 
-```{r results='hide'}
-data[,imputed:=mean(steps,na.rm=T),by=interval]
-data[!is.na(steps), imputed:=steps]
-```
+3. Create a new dataset that is equal to the original dataset but with the missing data filled in.
+    ```{r results='hide'}
+    data[,imputed:=mean(steps,na.rm=T),by=interval]
+    data[!is.na(steps), imputed:=steps]
+    ```
 
-```{r}
-hist(data[,sum(imputed),by=date][,V1],xlab='Steps/day', main="Histogram of steps per day")
-```
+4. Make a histogram of the total number of steps taken each day and Calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?
+    ```{r results='asis'}
+    daily.steps.imputed <- data[,sum(imputed),by=date]
+    hist(daily.steps.imputed[,V1],xlab='Steps/day', main="Histogram of steps per day")
+    print(xtable(daily.steps.imputed[,list(Mean=mean(V1),Median=median(V1))]), type='html')
+    ```
 
+    The mean is unchanged while the median moves towards the mean. The overall effect is to make the peak around the median and the mean in the histogram more pronounced.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 
+1. Create a new factor variable in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+    ```{r results='hide'}
+    data[,weekend := factor(weekdays(date,abbreviate = T) %in% c('Sat', 'Sun'), labels=c('weekday', 'weekend'))]
+    daily.pattern.panel <- data[,list(steps=mean(steps,na.rm=T)),by=list(interval,weekend)]
+    ```
+2. Make a panel plot containing a time series plot (i.e. `type = "l"`) of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis). 
 ```{r}
-daily.pattern.panel <- data[,weekend := weekdays(date,abbreviate = T) %in% c('Sat', 'Sun')][,list(steps=mean(steps,na.rm=T)),by=list(interval,weekend)]
-backup <- par(mfrow=c(2,1))
-plot(daily.pattern.panel[weekend==T,list(interval,steps)],type='l',
-     xlab='Time of day (in five minute intervals)',
-     ylab='Average number of steps',
-     main='Weekend'
-     )
-plot(daily.pattern.panel[weekend==F,list(interval,steps)],type='l',
-     xlab='Time of day (in five minute intervals)',
-     ylab='Average number of steps',
-     main='Weekdays'
-     )
-par <- backup
-```
+    library(lattice)
+    xyplot(steps ~ interval | weekend, data=daily.pattern.panel, type='l', layout=c(1,2))
+    ```
 
